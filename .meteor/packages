@@ -9,3 +9,6 @@ autopublish
 insecure
 pascoual:pdfjs
 arturs:konva
+less
+underscore
+iron:router

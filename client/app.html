@@ -1,0 +1,25 @@
+<head>
+  <title>Publication for Display</title>
+  <script type="text/javascript" src="qrcode.js"></script>
+</head>
+
+<body>
+</body>
+
+<template name="Application">
+  {{> Tools}}
+  {{> Output}}
+</template>
+
+<template name="Tools">
+  <div id="tools">
+    <input id="document-url" type="url" value="" />
+    <button id="prev-page">Previous Page</button>
+    <button id="next-page">Next Page</button>
+    <input id="dpi" type="text" value="300" />
+  </div>
+</template>
+
+<template name="Output">
+  <div id="output"></div>
+</template>
