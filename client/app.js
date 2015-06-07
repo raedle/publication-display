@@ -92,6 +92,8 @@ if (Meteor.isClient) {
     // paper.setZIndex(0);
 
     qrCode = new Konva.QrCode({
+      x: 60,
+      y: pageSize.height - 188,
       width: 128,
       height: 128,
       text: 'http://hci.uni-konstanz.de',
