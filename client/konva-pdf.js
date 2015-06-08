@@ -26,7 +26,6 @@
       // render page to canvas if url or page changed since last rendering
       if (this.renderedUrl != this.getUrl() ||
         this.renderedPage != this.getPage() ||
-        this.renderQuality != this.getRenderQuality() ||
         this.maxHeight != this.getMaxHeight()) {
 
         if (this.renderedUrl === this.getUrl()) {
@@ -36,7 +35,6 @@
         }
 
         this.renderedUrl = this.getUrl();
-        this.renderQuality = this.getRenderQuality();
         this.renderedPage = this.getPage();
         this.maxHeight = this.getMaxHeight();
       }
@@ -62,8 +60,8 @@
 
       // context.scale(this.getWidth() / this.canvas.width, this.getHeight() / this.canvas.height);
       //
-      // context.drawImage(this.canvas, 0, 0, this.canvas.width, this.canvas.height);
-      context.drawImage(this.canvas, 0, 0, this.getWidth(), this.getHeight());
+      context.drawImage(this.canvas, 0, 0, this.canvas.width, this.canvas.height);
+      // context.drawImage(this.canvas, 0, 0, this.getWidth(), this.getHeight());
       // context.drawImage(this.canvas, 0, 0, this.canvas.width, this.canvas.height, 0, 0, this.getWidth(), this.getHeight());
 
       context.fillStrokeShape(this);
@@ -105,23 +103,11 @@
         // parent or containing component
         var parent = that.getParent();
 
-        // 72DPI is the default render quality
-        var scale = that.getRenderQuality() / 72;
-        var viewport = page.getViewport(scale);
-
-        // set width and height of pdf component based on default viewport of
-        // pdf
-        // var desiredWidth = that.getMaxWidth() ? that.getMaxWidth() : parent.getWidth();
-        // var desiredHeight = that.getMaxHeight() ? that.getMaxHeight() : parent.getHeight();
         var desiredWidth = parent.getWidth();
         var desiredHeight = parent.getHeight();
 
-        // desiredWidth = Math.min(desiredWidth, that.getMaxWidth() ? that.getMaxWidth() : parent.getWidth());
-        // desiredHeight = Math.min(desiredHeight, that.getMaxHeight() ? that.getMaxHeight() : parent.getHeight());
+        console.log('des: ' + desiredWidth);
 
-        // console.log(desiredHeight);
-
-        // calculate scale and viewport dependent on parent
         var defaultViewport = page.getViewport(1.0);
         var scaleX = desiredWidth / defaultViewport.width;
         var scaleY = desiredHeight / defaultViewport.height;
@@ -131,12 +117,61 @@
         that.setWidth(newWidth);
         that.setHeight(newHeight);
 
-        console.log(desiredScale);
+        var viewport = page.getViewport(desiredScale);
+
+        // // set width and height of pdf component based on default viewport of
+        // // pdf
+        // // var desiredWidth = that.getMaxWidth() ? that.getMaxWidth() : parent.getWidth();
+        // // var desiredHeight = that.getMaxHeight() ? that.getMaxHeight() : parent.getHeight();
+        // var desiredWidth = parent.getWidth();
+        // var desiredHeight = parent.getHeight();
+        //
+        // // desiredWidth = Math.min(desiredWidth, that.getMaxWidth() ? that.getMaxWidth() : parent.getWidth());
+        // // desiredHeight = Math.min(desiredHeight, that.getMaxHeight() ? that.getMaxHeight() : parent.getHeight());
+        //
+        // // console.log(desiredHeight);
+        //
+        // // calculate scale and viewport dependent on parent
+        // var defaultViewport = page.getViewport(1.0);
+        // var scaleX = desiredWidth / defaultViewport.width;
+        // var scaleY = desiredHeight / defaultViewport.height;
+        // var desiredScale = Math.min(scaleX, scaleY);
+        // // var newWidth = Math.min(desiredWidth, defaultViewport.width * desiredScale);
+        // // var newHeight = Math.min(desiredHeight, defaultViewport.height * desiredScale);
+        // // that.setWidth(newWidth);
+        // // that.setHeight(newHeight);
 
         // Prepare canvas using PDF page dimensions
         var context = that.canvas.getContext('2d');
         that.canvas.height = viewport.height;
         that.canvas.width = viewport.width;
+        that.setWidth(viewport.width);
+        that.setHeight(viewport.height);
+        // that.getStage().setWidth(viewport.width);
+        // that.getStage().setHeight(viewport.height);
+
+        // var inverseScale = (1.0 * desiredScale) / scale;
+        // console.log(inverseScale);
+        //
+        // var stage = that.getStage();
+        //
+        // console.log(stage);
+        //
+        // var paperLayer = stage.findOne('#paper-layer');
+        //
+        // console.log(paperLayer);
+        //
+        // var $paperLayer = $(paperLayer.canvas._canvas);
+        //
+        // console.log($paperLayer);
+        //
+        // // var $paperLayer = $(paperLayer);
+        // //
+        // $paperLayer.css('transform', 'scale(' + inverseScale + ')');
+        // $paperLayer.css('transform-origin', '0 0 0');
+        //
+        // $paperLayer.css('-webkit-transform', 'scale(' + inverseScale + ')');
+        // $paperLayer.css('-webkit-transform-origin', '0 0 0');
 
         // Render PDF page into canvas context
         page.render({
@@ -259,23 +294,6 @@
   /**
    * get maxHeight
    * @name getMaxHeight
-   * @method
-   * @memberof Konva.Pdf.prototype
-   */
-
-  Konva.Factory.addGetterSetter(Konva.Pdf, 'renderQuality', 96);
-
-  /**
-   * set renderQuality
-   * @name setRenderQuality
-   * @method
-   * @memberof Konva.Pdf.prototype
-   * @param {Number} renderQuality. The default is 96
-   */
-
-  /**
-   * get renderQuality
-   * @name getRenderQuality
    * @method
    * @memberof Konva.Pdf.prototype
    */

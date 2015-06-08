@@ -99,7 +99,9 @@ if (Meteor.isClient) {
       height: pageSize.height
     });
 
-    var layer = new Konva.Layer();
+    var layer = new Konva.PrintLayer({
+      dpi: 1200
+    });
 
     // add white paper background
     var rect = new Konva.Rect({
@@ -112,7 +114,7 @@ if (Meteor.isClient) {
     paper = new Konva.Pdf({
       // url: 'HuddleLamp_ITS2014.pdf',
       url: encodeURIComponent('http://hci.uni-konstanz.de/downloads/HuddleLamp_Gesture_Study.pdf'),
-      renderQuality: 300,
+      // renderQuality: 600,
       // maxWidth: pageSize.width,
       // maxHeight: pageSize.height,
       draggable: true
