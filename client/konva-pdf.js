@@ -24,16 +24,47 @@
     _sceneFunc: function(context) {
 
       // render page to canvas if url or page changed since last rendering
-      if (this.renderedUrl != this.getUrl() || this.renderedPage != this.getPage() ||
-      this.renderQuality != this.getRenderQuality()) {
+      if (this.renderedUrl != this.getUrl() ||
+        this.renderedPage != this.getPage() ||
+        this.renderQuality != this.getRenderQuality() ||
+        this.maxHeight != this.getMaxHeight()) {
+
+        if (this.renderedUrl === this.getUrl()) {
+          this.renderPage(this.pdf, this.getPage());
+        } else {
+          this.renderDocumentInCanvas(this.getUrl(), this.getPage());
+        }
+
         this.renderedUrl = this.getUrl();
-        this.renderedPage = this.getPage();
         this.renderQuality = this.getRenderQuality();
-        this.renderPageInCanvas(this.getUrl(), this.getPage());
+        this.renderedPage = this.getPage();
+        this.maxHeight = this.getMaxHeight();
       }
 
+      // var steps = Math.ceil(Math.log(this.canvas.width / this.getWidth()) / Math.log(2));
+      //
+      // if (!isFinite(steps)) return;
+      //
+      // /// step 1 - create off-screen canvas
+      // var oc = document.createElement('canvas'),
+      //   octx = oc.getContext('2d');
+      //
+      // oc.width = this.canvas.width * 0.5;
+      // oc.height = this.canvas.height * 0.5;
+      //
+      // octx.drawImage(this.canvas, 0, 0, oc.width, oc.height);
+      //
+      // /// step 2
+      // octx.drawImage(oc, 0, 0, oc.width * 0.5, oc.height * 0.5);
+      //
+      // /// step 3
+      // context.drawImage(oc, 0, 0, oc.width * 0.5, oc.height * 0.5, 0, 0, this.getWidth(), this.getHeight());
+
+      // context.scale(this.getWidth() / this.canvas.width, this.getHeight() / this.canvas.height);
+      //
       // context.drawImage(this.canvas, 0, 0, this.canvas.width, this.canvas.height);
       context.drawImage(this.canvas, 0, 0, this.getWidth(), this.getHeight());
+      // context.drawImage(this.canvas, 0, 0, this.canvas.width, this.canvas.height, 0, 0, this.getWidth(), this.getHeight());
 
       context.fillStrokeShape(this);
     },
@@ -43,7 +74,7 @@
       context.closePath();
       context.fillStrokeShape(this);
     },
-    renderPageInCanvas: function(url, page) {
+    renderDocumentInCanvas: function(url, page) {
 
       var that = this;
 
@@ -59,11 +90,15 @@
         // set pdf document
         that.pdf = pdf;
 
-        that.doStuff(pdf, page);
+        // render page in canvas
+        that.renderPage(pdf, page);
       });
     },
-    doStuff: function(pdf, page) {
+    renderPage: function(pdf, page) {
       var that = this;
+
+      // flag to indicate whether page is currently rendered
+      that.isRenderingPage = true;
 
       pdf.getPage(page).then(function(page) {
 
@@ -76,8 +111,15 @@
 
         // set width and height of pdf component based on default viewport of
         // pdf
+        // var desiredWidth = that.getMaxWidth() ? that.getMaxWidth() : parent.getWidth();
+        // var desiredHeight = that.getMaxHeight() ? that.getMaxHeight() : parent.getHeight();
         var desiredWidth = parent.getWidth();
         var desiredHeight = parent.getHeight();
+
+        // desiredWidth = Math.min(desiredWidth, that.getMaxWidth() ? that.getMaxWidth() : parent.getWidth());
+        // desiredHeight = Math.min(desiredHeight, that.getMaxHeight() ? that.getMaxHeight() : parent.getHeight());
+
+        // console.log(desiredHeight);
 
         // calculate scale and viewport dependent on parent
         var defaultViewport = page.getViewport(1.0);
@@ -88,6 +130,8 @@
         var newHeight = Math.min(desiredHeight, defaultViewport.height * desiredScale);
         that.setWidth(newWidth);
         that.setHeight(newHeight);
+
+        console.log(desiredScale);
 
         // Prepare canvas using PDF page dimensions
         var context = that.canvas.getContext('2d');
@@ -100,14 +144,22 @@
           viewport: viewport,
           intent: 'print'
         }).promise.then(function() {
+
           // redraw parent after page was rendered
           parent.draw();
+
+          // set page as rendered
+          that.isRenderingPage = false;
         });
       });
     },
     nextPage: function() {
       if (!this.pdf) {
         throw new Meteor.Error('no pdf document loaded');
+      }
+
+      if (this.isRenderingPage) {
+        throw new Meteor.Error('rendering in progress')
       }
 
       var parent = this.getParent();
@@ -123,6 +175,10 @@
     previousPage: function() {
       if (!this.pdf) {
         throw new Meteor.Error('no pdf document loaded');
+      }
+
+      if (this.isRenderingPage) {
+        throw new Meteor.Error('rendering in progress')
       }
 
       var parent = this.getParent();
@@ -169,6 +225,40 @@
   /**
    * get page
    * @name getPage
+   * @method
+   * @memberof Konva.Pdf.prototype
+   */
+
+  Konva.Factory.addGetterSetter(Konva.Pdf, 'maxWidth', undefined);
+
+  /**
+   * set maxWidth
+   * @name setMaxWidth
+   * @method
+   * @memberof Konva.Pdf.prototype
+   * @param {Number} maxWidth. The default is undefined and parent width is used
+   */
+
+  /**
+   * get maxWidth
+   * @name getMaxWidth
+   * @method
+   * @memberof Konva.Pdf.prototype
+   */
+
+  Konva.Factory.addGetterSetter(Konva.Pdf, 'maxHeight', undefined);
+
+  /**
+   * set maxHeight
+   * @name setMaxHeight
+   * @method
+   * @memberof Konva.Pdf.prototype
+   * @param {Number} maxHeight. The default is undefined and parent height is used
+   */
+
+  /**
+   * get maxHeight
+   * @name getMaxHeight
    * @method
    * @memberof Konva.Pdf.prototype
    */

@@ -1,12 +1,19 @@
 /* CSS declarations go here */
+body {
+  // -webkit-transform: scale(.5);
+}
+
 @media screen {
   body {
     background-color: darken(white, 10%);
   }
   #output {
-    background-color: white;
-    border: 1px solid #ddd;
-    box-shadow: 5px 5px 5px #888;
+
+    canvas {
+      background-color: white;
+      border: 1px solid #ddd;
+      box-shadow: 5px 5px 5px #888;
+    }
   }
   #tools {
     position: fixed;
@@ -31,5 +38,6 @@
   }
   #output {
     visibility: visible;
+    // -webkit-transform: scale(.5);
   }
 }

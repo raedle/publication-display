@@ -1,13 +1,15 @@
 <head>
   <title>Publication for Display</title>
   <script type="text/javascript" src="qrcode.js"></script>
+  <script type="text/javascript" src="canvas2svg.js"></script>
 </head>
 
 <body>
 </body>
 
 <template name="Application">
-  {{> Tools}} {{> Output}}
+  {{> Tools}}
+  {{> Output}}
 </template>
 
 <template name="Tools">
@@ -16,6 +18,10 @@
       Document Url:
       <input id="document-url" type="url" value="" />
     </span>
+      <span id="document-max-height-label">
+        Max Document Height:
+        <input id="document-max-height" type="text" value="" />
+      </span>
     <button id="prev-page"><i class="fa fa-caret-left fa-2x"></i></button>
     <button id="next-page"><i class="fa fa-caret-right fa-2x"></i></button>
     <span id="dpi-label">
