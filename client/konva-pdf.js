@@ -26,6 +26,7 @@
       // render page to canvas if url or page changed since last rendering
       if (this.renderedUrl != this.getUrl() ||
         this.renderedPage != this.getPage() ||
+          this.rotation != this.getRotation() ||
         this.maxHeight != this.getMaxHeight()) {
 
         if (this.renderedUrl === this.getUrl()) {
@@ -36,30 +37,12 @@
 
         this.renderedUrl = this.getUrl();
         this.renderedPage = this.getPage();
+        this.rotation = this.getRotation();
         this.maxHeight = this.getMaxHeight();
       }
 
-      // var steps = Math.ceil(Math.log(this.canvas.width / this.getWidth()) / Math.log(2));
-      //
-      // if (!isFinite(steps)) return;
-      //
-      // /// step 1 - create off-screen canvas
-      // var oc = document.createElement('canvas'),
-      //   octx = oc.getContext('2d');
-      //
-      // oc.width = this.canvas.width * 0.5;
-      // oc.height = this.canvas.height * 0.5;
-      //
-      // octx.drawImage(this.canvas, 0, 0, oc.width, oc.height);
-      //
-      // /// step 2
-      // octx.drawImage(oc, 0, 0, oc.width * 0.5, oc.height * 0.5);
-      //
-      // /// step 3
-      // context.drawImage(oc, 0, 0, oc.width * 0.5, oc.height * 0.5, 0, 0, this.getWidth(), this.getHeight());
+      console.log('redraw');
 
-      // context.scale(this.getWidth() / this.canvas.width, this.getHeight() / this.canvas.height);
-      //
       // context.drawImage(this.canvas, 0, 0, this.canvas.width, this.canvas.height);
       context.drawImage(this.canvas, 0, 0, this.getWidth(), this.getHeight());
       // context.drawImage(this.canvas, 0, 0, this.canvas.width, this.canvas.height, 0, 0, this.getWidth(), this.getHeight());
@@ -72,9 +55,10 @@
       context.closePath();
       context.fillStrokeShape(this);
     },
-    renderDocumentInCanvas: function(url, page) {
+    renderDocumentInCanvas: function(url, pageNumber) {
 
       var that = this;
+      var encodedUrl = encodeURIComponent(url);
 
       /* In your Template.xxx.rendered */
       // Set worker URL to package assets
@@ -83,124 +67,61 @@
       PDFJS.maxCanvasPixels = -1;
 
       // Create PDF
-      PDFJS.getDocument('/download?url=' + url).then(function(pdf) {
+      PDFJS.getDocument('/download?url=' + encodedUrl).then(function(pdf) {
 
         // set pdf document
         that.pdf = pdf;
 
         // render page in canvas
-        that.renderPage(pdf, page);
+        that.renderPage(pdf, pageNumber);
       });
     },
-    renderPage: function(pdf, page) {
+    renderPage: function(pdf, pageNumber) {
       var that = this;
 
       // flag to indicate whether page is currently rendered
       that.isRenderingPage = true;
 
-      pdf.getPage(page).then(function(page) {
+      pdf.getPage(pageNumber).then(function(page) {
 
         // parent or containing component
         var parent = that.getParent();
         var desiredWidth = parent.getWidth();
         var desiredHeight = parent.getHeight();
+        desiredWidth = Math.min(desiredWidth, that.getMaxWidth() ? that.getMaxWidth() : parent.getWidth());
+        desiredHeight = Math.min(desiredHeight, that.getMaxHeight() ? that.getMaxHeight() : parent.getHeight());
 
         var context = that.canvas.getContext('2d');
 
         // clear offscreen canvas
         context.clearRect(0, 0, that.canvas.width, that.canvas.height);
 
+        var rotation = that.getRotation();
+        console.log(rotation);
+
+        var viewport = page.getViewport(1.0, rotation);
+        var scale = 1.0;
+
         var layer = that.getLayer();
-        if (layer.customNodeType) {
-          var dpi = layer.getDpi();
-
-          console.log('Layer DPI :' + dpi);
-
-          var scale = dpi / 72;
-          var viewport = page.getViewport(scale);
-
-          // Prepare canvas using PDF page dimensions
-          that.canvas.height = viewport.height;
-          that.canvas.width = viewport.width;
-
-          var defaultViewport = page.getViewport(1.0);
-          var scaleX = desiredWidth / defaultViewport.width;
-          var scaleY = desiredHeight / defaultViewport.height;
-          var desiredScale = Math.min(scaleX, scaleY);
-          var newWidth = Math.min(desiredWidth, defaultViewport.width * desiredScale);
-          var newHeight = Math.min(desiredHeight, defaultViewport.height * desiredScale);
-          that.setWidth(newWidth);
-          that.setHeight(newHeight);
+        if (layer.customNodeType && layer.customNodeType === 'PrintLayer') {
+          scale = layer.getDpi() / 72;
+          viewport = page.getViewport(scale, rotation);
         }
 
-        // var desiredWidth = parent.getWidth();
-        // var desiredHeight = parent.getHeight();
-        //
-        // console.log('des: ' + desiredWidth);
-        //
-        // var defaultViewport = page.getViewport(1.0);
-        // var scaleX = desiredWidth / defaultViewport.width;
-        // var scaleY = desiredHeight / defaultViewport.height;
-        // var desiredScale = Math.min(scaleX, scaleY);
-        // var newWidth = Math.min(desiredWidth, defaultViewport.width * desiredScale);
-        // var newHeight = Math.min(desiredHeight, defaultViewport.height * desiredScale);
-        // that.setWidth(newWidth);
-        // that.setHeight(newHeight);
-        //
-        // var viewport = page.getViewport(desiredScale);
+        // Prepare canvas using PDF page dimensions
+        that.canvas.height = viewport.height;
+        that.canvas.width = viewport.width;
 
-        // // set width and height of pdf component based on default viewport of
-        // // pdf
-        // // var desiredWidth = that.getMaxWidth() ? that.getMaxWidth() : parent.getWidth();
-        // // var desiredHeight = that.getMaxHeight() ? that.getMaxHeight() : parent.getHeight();
-        // var desiredWidth = parent.getWidth();
-        // var desiredHeight = parent.getHeight();
-        //
-        // // desiredWidth = Math.min(desiredWidth, that.getMaxWidth() ? that.getMaxWidth() : parent.getWidth());
-        // // desiredHeight = Math.min(desiredHeight, that.getMaxHeight() ? that.getMaxHeight() : parent.getHeight());
-        //
-        // // console.log(desiredHeight);
-        //
-        // // calculate scale and viewport dependent on parent
-        // var defaultViewport = page.getViewport(1.0);
-        // var scaleX = desiredWidth / defaultViewport.width;
-        // var scaleY = desiredHeight / defaultViewport.height;
-        // var desiredScale = Math.min(scaleX, scaleY);
-        // // var newWidth = Math.min(desiredWidth, defaultViewport.width * desiredScale);
-        // // var newHeight = Math.min(desiredHeight, defaultViewport.height * desiredScale);
-        // // that.setWidth(newWidth);
-        // // that.setHeight(newHeight);
+        var defaultViewport = page.getViewport(1.0, rotation);
+        var scaleX = desiredWidth / defaultViewport.width;
+        var scaleY = desiredHeight / defaultViewport.height;
+        var desiredScale = Math.min(scaleX, scaleY);
+        var newWidth = Math.min(desiredWidth, defaultViewport.width * desiredScale);
+        var newHeight = Math.min(desiredHeight, defaultViewport.height * desiredScale);
+        that.setWidth(newWidth);
+        that.setHeight(newHeight);
 
-        // // Prepare canvas using PDF page dimensions
-        // that.canvas.height = viewport.height;
-        // that.canvas.width = viewport.width;
-        // that.setWidth(viewport.width);
-        // that.setHeight(viewport.height);
-        // that.getStage().setWidth(viewport.width);
-        // that.getStage().setHeight(viewport.height);
-
-        // var inverseScale = (1.0 * desiredScale) / scale;
-        // console.log(inverseScale);
-        //
-        // var stage = that.getStage();
-        //
-        // console.log(stage);
-        //
-        // var paperLayer = stage.findOne('#paper-layer');
-        //
-        // console.log(paperLayer);
-        //
-        // var $paperLayer = $(paperLayer.canvas._canvas);
-        //
-        // console.log($paperLayer);
-        //
-        // // var $paperLayer = $(paperLayer);
-        // //
-        // $paperLayer.css('transform', 'scale(' + inverseScale + ')');
-        // $paperLayer.css('transform-origin', '0 0 0');
-        //
-        // $paperLayer.css('-webkit-transform', 'scale(' + inverseScale + ')');
-        // $paperLayer.css('-webkit-transform-origin', '0 0 0');
+        console.log(viewport);
 
         // Render PDF page into canvas context
         page.render({
@@ -208,6 +129,8 @@
           viewport: viewport,
           intent: 'print'
         }).promise.then(function() {
+
+          console.log('rendered');
 
           // redraw parent after page was rendered
           parent.draw();
@@ -278,17 +201,34 @@
 
   Konva.Factory.addGetterSetter(Konva.Pdf, 'page', 1);
 
+ /**
+  * set page
+  * @name setPage
+  * @method
+  * @memberof Konva.Pdf.prototype
+  * @param {Number} page. The default is 1
+  */
+
+ /**
+  * get page
+  * @name getPage
+  * @method
+  * @memberof Konva.Pdf.prototype
+  */
+
+  Konva.Factory.addGetterSetter(Konva.Pdf, 'rotation', 0);
+
   /**
-   * set page
-   * @name setPage
+   * set rotation
+   * @name setRotation
    * @method
    * @memberof Konva.Pdf.prototype
-   * @param {Number} page. The default is 1
+   * @param {Number} rotation. The default is 0
    */
 
   /**
-   * get page
-   * @name getPage
+   * get rotation
+   * @name getRotation
    * @method
    * @memberof Konva.Pdf.prototype
    */

@@ -53,16 +53,18 @@ if (Meteor.isClient) {
   };
 
   var stage;
-  var qrCode;
+  var layer;
   var paper;
+  var qrCode;
+  var rect;
 
   Template.Tools.events({
     "keyup #document-url": function(e, tmpl) {
       if (e.keyCode === 13) {
         var url = tmpl.$('#document-url').val();
         qrCode.setText(url);
-        paper.setUrl(encodeURIComponent(url));
-        stage.draw();
+        paper.setUrl(url);
+        layer.draw();
       }
     },
     "keyup #document-max-height": function(e, tmpl) {
@@ -73,8 +75,25 @@ if (Meteor.isClient) {
         console.log(maxHeight);
 
         paper.setMaxHeight(maxHeight);
-        stage.draw();
+        layer.draw();
       }
+    },
+    "click #rotate-page": function(e, tmpl) {
+      // paper.setRotation((paper.getRotation() + 90) % 360);
+      // layer.draw();
+
+      var width = stage.getWidth();
+      var height = stage.getHeight();
+
+      stage.setWidth(height);
+      stage.setHeight(width);
+
+      rect.setWidth(height);
+      rect.setHeight(width);
+
+      layer.setDpi(dpi);
+
+      stage.draw();
     },
     "click #prev-page": function(e, tmpl) {
       paper.previousPage();
@@ -85,8 +104,8 @@ if (Meteor.isClient) {
     "keyup #dpi": function(e, tmpl) {
       if (e.keyCode === 13) {
         var dpi = parseInt(tmpl.$('#dpi').val());
-        paper.setRenderQuality(dpi);
-        stage.draw();
+        layer.setDpi(dpi);
+        layer.draw();
       }
     }
   });
@@ -101,12 +120,12 @@ if (Meteor.isClient) {
       height: pageSize.height
     });
 
-    var layer = new Konva.PrintLayer({
+    layer = new Konva.PrintLayer({
       dpi: dpi
     });
 
     // add white paper background
-    var rect = new Konva.Rect({
+    rect = new Konva.Rect({
       width: pageSize.width,
       height: pageSize.height,
       fill: 'white'
@@ -114,7 +133,7 @@ if (Meteor.isClient) {
     layer.add(rect);
 
     paper = new Konva.Pdf({
-      url: encodeURIComponent('http://hci.uni-konstanz.de/downloads/HuddleLamp_Gesture_Study.pdf'),
+      url: 'http://hci.uni-konstanz.de/downloads/paper674.pdf',
       draggable: true
     });
 
@@ -123,7 +142,7 @@ if (Meteor.isClient) {
 
     qrCode = new Konva.QrCode({
       x: 60,
-      y: pageSize.height - 188,
+      y: 60,//pageSize.height - 188,
       width: 128,
       height: 128,
       text: 'http://hci.uni-konstanz.de',

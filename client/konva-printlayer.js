@@ -43,53 +43,9 @@
       // // call super constructor
       Konva.Layer.call(this, config);
     },
-    // /**
-    //  * get/set width of layer.getter return width of stage. setter doing nothing.
-    //  * if you want change width use `stage.width(value);`
-    //  * @name width
-    //  * @method
-    //  * @memberof Konva.BaseLayer.prototype
-    //  * @returns {Number}
-    //  * @example
-    //  * var width = layer.width();
-    //  */
-    // getWidth: function() {
-    //     if (this.parent) {
-    //
-    //       var dpi = this.getDpi();
-    //
-    //       // 72DPI is the default render quality
-    //       var scale = dpi / 72;
-    //
-    //       return this.parent.getWidth() * scale;
-    //     }
-    // },
-    // /**
-    //  * get/set height of layer.getter return height of stage. setter doing nothing.
-    //  * if you want change height use `stage.height(value);`
-    //  * @name height
-    //  * @method
-    //  * @memberof Konva.BaseLayer.prototype
-    //  * @returns {Number}
-    //  * @example
-    //  * var height = layer.height();
-    //  */
-    // getHeight: function() {
-    //     if (this.parent) {
-    //
-    //       var dpi = this.getDpi();
-    //
-    //       // 72DPI is the default render quality
-    //       var scale = dpi / 72;
-    //
-    //       return this.parent.getHeight() * scale;
-    //     }
-    // },
     _setCanvasSize: function(width, height) {
 
       var dpi = this.getDpi();
-
-      console.log(dpi);
 
       // 72DPI is the default render quality
       var scale = dpi / 72;
@@ -98,14 +54,8 @@
       var scaledWidth = width * scale;
       var scaledHeight = height * scale;
 
-      console.log(width);
-      console.log(scaledWidth);
-
       this.canvas.setSize(scaledWidth, scaledHeight);
       this.hitCanvas.setSize(scaledWidth, scaledHeight);
-
-      this.setWidth(scaledWidth);
-      this.setHeight(scaledHeight);
 
       // scale down to actual size
       var $printLayerCanvas = $(this.canvas._canvas);
@@ -150,27 +100,19 @@
         canvas.getContext().scale(inverseScale, inverseScale);
 
         return this;
+    },
+    getDpi: function() {
+      if (!this.attrs['dpi']) {
+        this.attrs['dpi'] = 72;
+      }
+      return this.attrs['dpi'];
+    },
+    setDpi: function(dpi) {
+      this.attrs['dpi'] = dpi;
+      this._setCanvasSize(this.getWidth(), this.getHeight());
     }
   });
 
   Konva.Util.extend(Konva.PrintLayer, Konva.Layer);
-
-  Konva.Factory.addGetterSetter(Konva.PrintLayer, 'dpi', 72);
-
-  /**
-   * set dpi
-   * @name setDpi
-   * @method
-   * @memberof Konva.PrintLayer.prototype
-   * @param {Number} dpi. The default is 96
-   */
-
-  /**
-   * get dpi
-   * @name getDpi
-   * @method
-   * @memberof Konva.PrintLayer.prototype
-   */
-
   Konva.Collection.mapMethods(Konva.PrintLayer);
 })();
