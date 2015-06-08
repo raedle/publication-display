@@ -38,53 +38,53 @@
 
   Konva.Util.addMethods(Konva.PrintLayer, {
     __initPrintLayer: function(config) {
-      this.nodeType = 'PrintLayer';
+      this.customNodeType = 'PrintLayer';
 
       // // call super constructor
       Konva.Layer.call(this, config);
     },
-    /**
-     * get/set width of layer.getter return width of stage. setter doing nothing.
-     * if you want change width use `stage.width(value);`
-     * @name width
-     * @method
-     * @memberof Konva.BaseLayer.prototype
-     * @returns {Number}
-     * @example
-     * var width = layer.width();
-     */
-    getWidth: function() {
-        if (this.parent) {
-
-          var dpi = this.getDpi();
-
-          // 72DPI is the default render quality
-          var scale = dpi / 72;
-
-          return this.parent.getWidth() * scale;
-        }
-    },
-    /**
-     * get/set height of layer.getter return height of stage. setter doing nothing.
-     * if you want change height use `stage.height(value);`
-     * @name height
-     * @method
-     * @memberof Konva.BaseLayer.prototype
-     * @returns {Number}
-     * @example
-     * var height = layer.height();
-     */
-    getHeight: function() {
-        if (this.parent) {
-
-          var dpi = this.getDpi();
-
-          // 72DPI is the default render quality
-          var scale = dpi / 72;
-
-          return this.parent.getHeight() * scale;
-        }
-    },
+    // /**
+    //  * get/set width of layer.getter return width of stage. setter doing nothing.
+    //  * if you want change width use `stage.width(value);`
+    //  * @name width
+    //  * @method
+    //  * @memberof Konva.BaseLayer.prototype
+    //  * @returns {Number}
+    //  * @example
+    //  * var width = layer.width();
+    //  */
+    // getWidth: function() {
+    //     if (this.parent) {
+    //
+    //       var dpi = this.getDpi();
+    //
+    //       // 72DPI is the default render quality
+    //       var scale = dpi / 72;
+    //
+    //       return this.parent.getWidth() * scale;
+    //     }
+    // },
+    // /**
+    //  * get/set height of layer.getter return height of stage. setter doing nothing.
+    //  * if you want change height use `stage.height(value);`
+    //  * @name height
+    //  * @method
+    //  * @memberof Konva.BaseLayer.prototype
+    //  * @returns {Number}
+    //  * @example
+    //  * var height = layer.height();
+    //  */
+    // getHeight: function() {
+    //     if (this.parent) {
+    //
+    //       var dpi = this.getDpi();
+    //
+    //       // 72DPI is the default render quality
+    //       var scale = dpi / 72;
+    //
+    //       return this.parent.getHeight() * scale;
+    //     }
+    // },
     _setCanvasSize: function(width, height) {
 
       var dpi = this.getDpi();
@@ -119,6 +119,37 @@
         '-o-transform-origin': '0 0 0',
         'transform-origin': '0 0 0'
       });
+    },
+    drawScene: function(can, top) {
+        var layer = this.getLayer(),
+            canvas = can || (layer && layer.getCanvas());
+
+        this._fire(BEFORE_DRAW, {
+            node: this
+        });
+
+        if(this.getClearBeforeDraw()) {
+            canvas.getContext().clear();
+        }
+
+
+        var dpi = this.getDpi();
+
+        // 72DPI is the default render quality
+        var scale = dpi / 72;
+        var inverseScale = 1 / scale;
+
+        canvas.getContext().scale(scale, scale);
+
+        Konva.Container.prototype.drawScene.call(this, canvas, top);
+
+        this._fire(DRAW, {
+            node: this
+        });
+
+        canvas.getContext().scale(inverseScale, inverseScale);
+
+        return this;
     }
   });
 

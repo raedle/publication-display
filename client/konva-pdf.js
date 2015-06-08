@@ -60,8 +60,8 @@
 
       // context.scale(this.getWidth() / this.canvas.width, this.getHeight() / this.canvas.height);
       //
-      context.drawImage(this.canvas, 0, 0, this.canvas.width, this.canvas.height);
-      // context.drawImage(this.canvas, 0, 0, this.getWidth(), this.getHeight());
+      // context.drawImage(this.canvas, 0, 0, this.canvas.width, this.canvas.height);
+      context.drawImage(this.canvas, 0, 0, this.getWidth(), this.getHeight());
       // context.drawImage(this.canvas, 0, 0, this.canvas.width, this.canvas.height, 0, 0, this.getWidth(), this.getHeight());
 
       context.fillStrokeShape(this);
@@ -102,22 +102,52 @@
 
         // parent or containing component
         var parent = that.getParent();
-
         var desiredWidth = parent.getWidth();
         var desiredHeight = parent.getHeight();
 
-        console.log('des: ' + desiredWidth);
+        var context = that.canvas.getContext('2d');
 
-        var defaultViewport = page.getViewport(1.0);
-        var scaleX = desiredWidth / defaultViewport.width;
-        var scaleY = desiredHeight / defaultViewport.height;
-        var desiredScale = Math.min(scaleX, scaleY);
-        var newWidth = Math.min(desiredWidth, defaultViewport.width * desiredScale);
-        var newHeight = Math.min(desiredHeight, defaultViewport.height * desiredScale);
-        that.setWidth(newWidth);
-        that.setHeight(newHeight);
+        // clear offscreen canvas
+        context.clearRect(0, 0, that.canvas.width, that.canvas.height);
 
-        var viewport = page.getViewport(desiredScale);
+        var layer = that.getLayer();
+        if (layer.customNodeType) {
+          var dpi = layer.getDpi();
+
+          console.log('Layer DPI :' + dpi);
+
+          var scale = dpi / 72;
+          var viewport = page.getViewport(scale);
+
+          // Prepare canvas using PDF page dimensions
+          that.canvas.height = viewport.height;
+          that.canvas.width = viewport.width;
+
+          var defaultViewport = page.getViewport(1.0);
+          var scaleX = desiredWidth / defaultViewport.width;
+          var scaleY = desiredHeight / defaultViewport.height;
+          var desiredScale = Math.min(scaleX, scaleY);
+          var newWidth = Math.min(desiredWidth, defaultViewport.width * desiredScale);
+          var newHeight = Math.min(desiredHeight, defaultViewport.height * desiredScale);
+          that.setWidth(newWidth);
+          that.setHeight(newHeight);
+        }
+
+        // var desiredWidth = parent.getWidth();
+        // var desiredHeight = parent.getHeight();
+        //
+        // console.log('des: ' + desiredWidth);
+        //
+        // var defaultViewport = page.getViewport(1.0);
+        // var scaleX = desiredWidth / defaultViewport.width;
+        // var scaleY = desiredHeight / defaultViewport.height;
+        // var desiredScale = Math.min(scaleX, scaleY);
+        // var newWidth = Math.min(desiredWidth, defaultViewport.width * desiredScale);
+        // var newHeight = Math.min(desiredHeight, defaultViewport.height * desiredScale);
+        // that.setWidth(newWidth);
+        // that.setHeight(newHeight);
+        //
+        // var viewport = page.getViewport(desiredScale);
 
         // // set width and height of pdf component based on default viewport of
         // // pdf
@@ -141,12 +171,11 @@
         // // that.setWidth(newWidth);
         // // that.setHeight(newHeight);
 
-        // Prepare canvas using PDF page dimensions
-        var context = that.canvas.getContext('2d');
-        that.canvas.height = viewport.height;
-        that.canvas.width = viewport.width;
-        that.setWidth(viewport.width);
-        that.setHeight(viewport.height);
+        // // Prepare canvas using PDF page dimensions
+        // that.canvas.height = viewport.height;
+        // that.canvas.width = viewport.width;
+        // that.setWidth(viewport.width);
+        // that.setHeight(viewport.height);
         // that.getStage().setWidth(viewport.width);
         // that.getStage().setHeight(viewport.height);
 

@@ -1,5 +1,7 @@
 if (Meteor.isClient) {
 
+  var dpi = 300;
+
   var PageSizes = {
     A4: {
       unit: 'mm',
@@ -35,9 +37,9 @@ if (Meteor.isClient) {
   PageSizes.__init();
 
   /**
-   * Converts physical page size dimensions to pixels to fit print dpi.
+   * Converts physical page size dimensions to pixels to fit screen dpi.
    */
-  var convertPageSizeToPrintSize = function(pageSize, printDpi) {
+  var convertPageSizeToScreenSize = function(pageSize, printDpi) {
 
     var size = pageSize.toInch();
 
@@ -91,7 +93,7 @@ if (Meteor.isClient) {
 
   Template.Output.rendered = function() {
 
-    var pageSize = convertPageSizeToPrintSize(PageSizes.A4, 96);
+    var pageSize = convertPageSizeToScreenSize(PageSizes.A4, 96);
 
     stage = new Konva.Stage({
       container: 'output',
@@ -100,7 +102,7 @@ if (Meteor.isClient) {
     });
 
     var layer = new Konva.PrintLayer({
-      dpi: 1200
+      dpi: dpi
     });
 
     // add white paper background
@@ -112,11 +114,7 @@ if (Meteor.isClient) {
     layer.add(rect);
 
     paper = new Konva.Pdf({
-      // url: 'HuddleLamp_ITS2014.pdf',
       url: encodeURIComponent('http://hci.uni-konstanz.de/downloads/HuddleLamp_Gesture_Study.pdf'),
-      // renderQuality: 600,
-      // maxWidth: pageSize.width,
-      // maxHeight: pageSize.height,
       draggable: true
     });
 
