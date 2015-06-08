@@ -1,7 +1,5 @@
 if (Meteor.isClient) {
 
-  var dpi = 300;
-
   var PageSizes = {
     A4: {
       unit: 'mm',
@@ -52,11 +50,30 @@ if (Meteor.isClient) {
     };
   };
 
+  // var url = 'http://hci.uni-konstanz.de/downloads/paper674.pdf';
+  var url = 'http://hci.uni-konstanz.de/downloads/its230n-klinkhammer.pdf';
+  var dpi = 96;
+  var pageSize = convertPageSizeToScreenSize(PageSizes.A4, 96);
+
   var stage;
   var layer;
   var paper;
   var qrCode;
   var rect;
+
+  Template.Application.events({
+
+    "click #prev-page": function(e, tmpl) {
+      paper.previousPage();
+    },
+    "click #next-page": function(e, tmpl) {
+      paper.nextPage();
+    },
+  });
+
+  Template.Tools.rendered = function() {
+    this.$('select').material_select();
+  };
 
   Template.Tools.events({
     "keyup #document-url": function(e, tmpl) {
@@ -67,52 +84,66 @@ if (Meteor.isClient) {
         layer.draw();
       }
     },
-    "keyup #document-max-height": function(e, tmpl) {
-      if (e.keyCode === 13) {
+    "change input[name=document-orientation]": function(e, tmpl) {
+      console.log('hello');
+      console.log(e);
 
-        var maxHeight = parseInt(tmpl.$('#document-max-height').val());
+      var width = pageSize.width;
+      var height = pageSize.height;
 
-        console.log(maxHeight);
-
-        paper.setMaxHeight(maxHeight);
-        layer.draw();
+      var id = e.currentTarget.id;
+      switch (id) {
+        case 'document-landscape':
+          stage.setWidth(height);
+          stage.setHeight(width);
+          rect.setWidth(height);
+          rect.setHeight(width);
+          $('#document-max-height').attr('max', width);
+          $('#document-max-height').val(width);
+          break;
+        case 'document-portrait':
+          stage.setWidth(width);
+          stage.setHeight(height);
+          rect.setWidth(width);
+          rect.setHeight(height);
+          $('#document-max-height').attr('max', height);
+          $('#document-max-height').val(height);
+          break;
       }
-    },
-    "click #rotate-page": function(e, tmpl) {
-      // paper.setRotation((paper.getRotation() + 90) % 360);
-      // layer.draw();
-
-      var width = stage.getWidth();
-      var height = stage.getHeight();
-
-      stage.setWidth(height);
-      stage.setHeight(width);
-
-      rect.setWidth(height);
-      rect.setHeight(width);
 
       layer.setDpi(dpi);
-
+      paper.rerender();
       stage.draw();
     },
-    "click #prev-page": function(e, tmpl) {
-      paper.previousPage();
+    "change #document-render-quality": function(e, tmpl) {
+      var dpi = parseInt(tmpl.$('#document-render-quality').val());
+
+      layer.setDpi(dpi);
+      paper.rerender();
+      layer.draw();
     },
-    "click #next-page": function(e, tmpl) {
-      paper.nextPage();
+    "change #document-max-height": function(e, tmpl) {
+      var maxHeight = parseInt(tmpl.$('#document-max-height').val());
+
+      paper.setMaxHeight(maxHeight);
+      layer.draw();
     },
-    "keyup #dpi": function(e, tmpl) {
-      if (e.keyCode === 13) {
-        var dpi = parseInt(tmpl.$('#dpi').val());
-        layer.setDpi(dpi);
-        layer.draw();
-      }
+    "click #print": function(e, tmpl) {
+      layer.setDpi(300);
+      paper.rerender();
+      layer.draw();
+
+      // wait until rendered for print.
+      Meteor.setTimeout(function() {
+        window.print();
+      }, 3000);
     }
   });
 
   Template.Output.rendered = function() {
 
-    var pageSize = convertPageSizeToScreenSize(PageSizes.A4, 96);
+    $('#document-max-height').attr('max', pageSize.height);
+    $('#document-max-height').val(pageSize.height);
 
     stage = new Konva.Stage({
       container: 'output',
@@ -133,7 +164,7 @@ if (Meteor.isClient) {
     layer.add(rect);
 
     paper = new Konva.Pdf({
-      url: 'http://hci.uni-konstanz.de/downloads/paper674.pdf',
+      url: url,
       draggable: true
     });
 
@@ -142,10 +173,10 @@ if (Meteor.isClient) {
 
     qrCode = new Konva.QrCode({
       x: 60,
-      y: 60,//pageSize.height - 188,
+      y: 60, //pageSize.height - 188,
       width: 128,
       height: 128,
-      text: 'http://hci.uni-konstanz.de',
+      text: url,
       draggable: true
     });
     layer.add(qrCode);

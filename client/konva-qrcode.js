@@ -38,6 +38,11 @@
         }
       }
 
+      context.font = 'bold 12px Arial';
+      context.fillStyle = 'black';
+      context.fillText('Link to ' + this.getText(), this.getWidth() + 10, this.getHeight() - 25);
+      context.fillText('Scan QR code for digital copy of paper', this.getWidth() + 10, this.getHeight() - 5);
+
       context.fillStrokeShape(this);
     },
     _hitFunc: function(context) {

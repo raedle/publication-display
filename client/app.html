@@ -1,40 +1,133 @@
 <head>
   <title>Publication for Display</title>
   <script type="text/javascript" src="qrcode.js"></script>
-  <script type="text/javascript" src="canvas2svg.js"></script>
 </head>
 
 <body>
 </body>
 
 <template name="Application">
-  {{> Tools}}
-  {{> Output}}
+  <header>
+    <nav>
+      <div class="nav-wrapper">
+        <a href="#" class="brand-logo">Publication Display</a>
+        <ul id="nav-mobile" class="right hide-on-med-and-down">
+          <li><a href="http://hci.uni-konstanz.de">HCI Group</a></li>
+        </ul>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <div class="container">
+      <div class="row">
+        <div class="col s12 m6 l5">
+          <div class="tools">
+            {{> Tools}}
+          </div>
+        </div>
+        <div class="col s12 m6 l7">
+          <div class="row navigation-tools">
+            <div class="col s12">
+              <button id="prev-page" class="btn-floating waves-effect waves-light">
+                <i class="mdi-image-navigate-before"></i>
+              </button>
+              <button id="next-page" class="btn-floating waves-effect waves-light">
+                <i class="mdi-image-navigate-next"></i>
+              </button>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col s12">
+              <div class="output">
+                {{> Output}}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="page-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col l6 s12">
+          <h5 class="white-text">Goal</h5>
+          <p class="grey-text text-lighten-4">The Publication Display eases the creation of a physical printout + QR code that points to digital resource. This printout can be used for advertising research publications.</p>
+        </div>
+        <div class="col l4 offset-l2 s12">
+          <h5 class="white-text">Links</h5>
+          <ul>
+            <li><a class="grey-text text-lighten-3" href="http://hci.uni-konstanz.de">Human-Computer Interaction Group</a></li>
+            <li><a class="grey-text text-lighten-3" href="http://www.meteor.com">Meteor Platform</a></li>
+            <li><a class="grey-text text-lighten-3" href="http://konvajs.github.io">KonvaJS on Github</a></li>
+            <li><a class="grey-text text-lighten-3" href="http://www.d-project.com/">QR Code for JavaScript</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+      <div class="container">
+        &copy; 2015 Roman Rädle
+        <a class="grey-text text-lighten-4 right" href="http://romanraedle.com">http://romanraedle.com</a>
+      </div>
+    </div>
+  </footer>
+
+  <div class="progress-modal">
+    <div class="progress">
+      <div class="indeterminate"></div>
+    </div>
+  </div>
 </template>
 
 <template name="Tools">
-  <div id="tools">
-    <span id="document-url-label">
-      Document Url:
-      <input id="document-url" type="url" value="" />
-    </span>
-      <span id="document-max-height-label">
-        Max Document Height:
-        <input id="document-max-height" type="text" value="" />
-      </span>
-    <button id="prev-page"><i class="fa fa-caret-left fa-2x"></i></button>
-    <button id="next-page"><i class="fa fa-caret-right fa-2x"></i></button>
-    <button id="rotate-page"><i class="fa fa-rotate fa-2x"></i>Rotate</button>
-    <span>
-      <i class="fa fa-file-o"></i>
-    </span>
-    <span>
-      <i class="fa fa-file-o fa-rotate-270"></i>
-    </span>
-    <span id="dpi-label">
-      <input id="dpi" type="text" value="300" />
-    </span>
+  <div class="row">
+    <div class="input-field col s12">
+      <i class="mdi-content-link prefix"></i>
+      <input id="document-url" type="url" class="validate">
+      <label for="first_name">Url to Document</label>
+    </div>
   </div>
+
+  <div class="input-field col s12">
+    <select id="document-render-quality">
+      <option value="72">72 dpi</option>
+      <option value="96" selected>96 dpi</option>
+      <option value="300">300 dpi</option>
+      <option value="600">600 dpi (print)</option>
+      <option value="1200">1200 dpi (memory leak)</option>
+    </select>
+    <label>Render Quality</label>
+  </div>
+
+  <div class="input-field col s12">
+    <div class="row">
+      <input id="document-portrait" name="document-orientation" class="with-gap" type="radio" checked />
+      <label for="document-portrait"><i class="mdi-image-crop-portrait left"></i> Portrait</label>
+    </div>
+    <div class="row">
+      <input id="document-landscape" name="document-orientation" class="with-gap" type="radio" />
+      <label for="document-landscape"><i class="mdi-image-crop-landscape left"></i> Landscape</label>
+    </div>
+  </div>
+
+  <div class="input-field col s12">
+    <div>
+      <label for="document-max-height">Max. Document Height</label>
+    </div>
+    <p class="range-field">
+      <input id="document-max-height" type="range" min="600" max="1000" />
+    </p>
+  </div>
+
+  <div class="input-field col s12">
+    <button id="print" class="btn-floating btn-large waves-effect waves-light blue">
+      <i class="mdi-action-print"></i>
+    </button>
+  </div>
+
 </template>
 
 <template name="Output">

@@ -1,43 +1,82 @@
-/* CSS declarations go here */
-body {
-  // -webkit-transform: scale(.5);
-}
-
 @media screen {
   body {
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
     background-color: darken(white, 10%);
   }
-  #output {
+  header {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+  main {
+    flex: 1 0 auto;
 
-    canvas {
-      background-color: white;
-      border: 1px solid #ddd;
-      box-shadow: 5px 5px 5px #888;
+    margin: 20px;
+
+    #output {
+      canvas {
+        background-color: white;
+        border: 1px solid #ddd;
+        box-shadow: 0 0 20px 0 #888;
+      }
+    }
+    #tools {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 9999;
+      width: 100%;
+      height: 60px;
+      background-color: gray;
+
+      // opacity: 0;
+      transition: opacity 0.25s ease-in-out;
+      -moz-transition: opacity 0.25s ease-in-out;
+      -webkit-transition: opacity 0.25s ease-in-out;
+      &:hover {
+        opacity: 1.0;
+      }
     }
   }
-  #tools {
+  .progress-modal {
+    display: none;
     position: fixed;
     top: 0;
     left: 0;
-    z-index: 9999;
     width: 100%;
-    height: 60px;
-    background-color: gray;
-    opacity: 0;
-    transition: opacity 0.25s ease-in-out;
-    -moz-transition: opacity 0.25s ease-in-out;
-    -webkit-transition: opacity 0.25s ease-in-out;
-    &:hover {
-      opacity: 1.0;
-    }
+    height: 100%;
+    margin: 0 auto;
+    background-color: rgba(0, 0, 0, .25);
   }
 }
 @media print {
-  #tools {
-    visibility: collapse;
+  header {
+    display: none;
   }
-  #output {
-    visibility: visible;
-    // -webkit-transform: scale(.5);
+  footer {
+    display: none;
+  }
+  main {
+    .tools {
+      display: none;
+    }
+    .navigation-tools {
+      display: none;
+    }
+    .container,
+    .row,
+    .col {
+      visibility: collapse;
+      margin: 0;
+      padding: 0;
+    }
+    #output {
+      margin: 0;
+      visibility: visible;
+    }
+  }
+  .progress-modal {
+    display: none;
   }
 }

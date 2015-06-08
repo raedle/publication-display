@@ -23,6 +23,8 @@ Router.route('/download', function() {
   };
 
   if (url) {
+    console.log('Downloading ' + url);
+
     download(url);
   }
 }, {

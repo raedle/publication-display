@@ -26,7 +26,7 @@
       // render page to canvas if url or page changed since last rendering
       if (this.renderedUrl != this.getUrl() ||
         this.renderedPage != this.getPage() ||
-          this.rotation != this.getRotation() ||
+        this.rotation != this.getRotation() ||
         this.maxHeight != this.getMaxHeight()) {
 
         if (this.renderedUrl === this.getUrl()) {
@@ -40,8 +40,6 @@
         this.rotation = this.getRotation();
         this.maxHeight = this.getMaxHeight();
       }
-
-      console.log('redraw');
 
       // context.drawImage(this.canvas, 0, 0, this.canvas.width, this.canvas.height);
       context.drawImage(this.canvas, 0, 0, this.getWidth(), this.getHeight());
@@ -66,8 +64,13 @@
 
       PDFJS.maxCanvasPixels = -1;
 
+      $('.progress-modal').css('display', 'block');
+
       // Create PDF
       PDFJS.getDocument('/download?url=' + encodedUrl).then(function(pdf) {
+        // PDFJS.getDocument('HuddleLamp_ITS2014.pdf').then(function(pdf) {
+
+        $('.progress-modal').css('display', 'none');
 
         // set pdf document
         that.pdf = pdf;
@@ -126,11 +129,9 @@
         // Render PDF page into canvas context
         page.render({
           canvasContext: context,
-          viewport: viewport,
-          intent: 'print'
+          viewport: viewport //,
+            // intent: 'print'
         }).promise.then(function() {
-
-          console.log('rendered');
 
           // redraw parent after page was rendered
           parent.draw();
@@ -146,7 +147,7 @@
       }
 
       if (this.isRenderingPage) {
-        throw new Meteor.Error('rendering in progress')
+        throw new Meteor.Error('rendering in progress');
       }
 
       var parent = this.getParent();
@@ -165,7 +166,7 @@
       }
 
       if (this.isRenderingPage) {
-        throw new Meteor.Error('rendering in progress')
+        throw new Meteor.Error('rendering in progress');
       }
 
       var parent = this.getParent();
@@ -177,6 +178,9 @@
 
       // redraw parent
       parent.draw();
+    },
+    rerender: function() {
+      this.renderPage(this.pdf, this.renderedPage);
     }
   };
 
@@ -201,20 +205,20 @@
 
   Konva.Factory.addGetterSetter(Konva.Pdf, 'page', 1);
 
- /**
-  * set page
-  * @name setPage
-  * @method
-  * @memberof Konva.Pdf.prototype
-  * @param {Number} page. The default is 1
-  */
+  /**
+   * set page
+   * @name setPage
+   * @method
+   * @memberof Konva.Pdf.prototype
+   * @param {Number} page. The default is 1
+   */
 
- /**
-  * get page
-  * @name getPage
-  * @method
-  * @memberof Konva.Pdf.prototype
-  */
+  /**
+   * get page
+   * @name getPage
+   * @method
+   * @memberof Konva.Pdf.prototype
+   */
 
   Konva.Factory.addGetterSetter(Konva.Pdf, 'rotation', 0);
 
