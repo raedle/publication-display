@@ -59,44 +59,49 @@
         // set pdf document
         that.pdf = pdf;
 
-        pdf.getPage(page).then(function(page) {
+        that.doStuff(pdf, page);
+      });
+    },
+    doStuff: function(pdf, page) {
+      var that = this;
 
-          // parent or containing component
-          var parent = that.getParent();
+      pdf.getPage(page).then(function(page) {
 
-          // 72DPI is the default render quality
-          var scale = that.getRenderQuality() / 72;
-          var viewport = page.getViewport(scale);
+        // parent or containing component
+        var parent = that.getParent();
 
-          // set width and height of pdf component based on default viewport of
-          // pdf
-          var desiredWidth = parent.getWidth();
-          var desiredHeight = parent.getHeight();
+        // 72DPI is the default render quality
+        var scale = that.getRenderQuality() / 72;
+        var viewport = page.getViewport(scale);
 
-          // calculate scale and viewport dependent on parent
-          var defaultViewport = page.getViewport(1.0);
-          var scaleX = desiredWidth / defaultViewport.width;
-          var scaleY = desiredHeight / defaultViewport.height;
-          var desiredScale = Math.min(scaleX, scaleY);
-          var newWidth = Math.min(desiredWidth, defaultViewport.width * desiredScale);
-          var newHeight = Math.min(desiredHeight, defaultViewport.height * desiredScale);
-          that.setWidth(newWidth);
-          that.setHeight(newHeight);
+        // set width and height of pdf component based on default viewport of
+        // pdf
+        var desiredWidth = parent.getWidth();
+        var desiredHeight = parent.getHeight();
 
-          // Prepare canvas using PDF page dimensions
-          var context = that.canvas.getContext('2d');
-          that.canvas.height = viewport.height;
-          that.canvas.width = viewport.width;
+        // calculate scale and viewport dependent on parent
+        var defaultViewport = page.getViewport(1.0);
+        var scaleX = desiredWidth / defaultViewport.width;
+        var scaleY = desiredHeight / defaultViewport.height;
+        var desiredScale = Math.min(scaleX, scaleY);
+        var newWidth = Math.min(desiredWidth, defaultViewport.width * desiredScale);
+        var newHeight = Math.min(desiredHeight, defaultViewport.height * desiredScale);
+        that.setWidth(newWidth);
+        that.setHeight(newHeight);
 
-          // Render PDF page into canvas context
-          page.render({
-            canvasContext: context,
-            viewport: viewport,
-            intent: 'print'
-          }).promise.then(function() {
-            // redraw parent after page was rendered
-            parent.draw();
-          });
+        // Prepare canvas using PDF page dimensions
+        var context = that.canvas.getContext('2d');
+        that.canvas.height = viewport.height;
+        that.canvas.width = viewport.width;
+
+        // Render PDF page into canvas context
+        page.render({
+          canvasContext: context,
+          viewport: viewport,
+          intent: 'print'
+        }).promise.then(function() {
+          // redraw parent after page was rendered
+          parent.draw();
         });
       });
     },

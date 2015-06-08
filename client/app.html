@@ -7,16 +7,20 @@
 </body>
 
 <template name="Application">
-  {{> Tools}}
-  {{> Output}}
+  {{> Tools}} {{> Output}}
 </template>
 
 <template name="Tools">
   <div id="tools">
-    <input id="document-url" type="url" value="" />
-    <button id="prev-page">Previous Page</button>
-    <button id="next-page">Next Page</button>
-    <input id="dpi" type="text" value="300" />
+    <span id="document-url-label">
+      Document Url:
+      <input id="document-url" type="url" value="" />
+    </span>
+    <button id="prev-page"><i class="fa fa-caret-left fa-2x"></i></button>
+    <button id="next-page"><i class="fa fa-caret-right fa-2x"></i></button>
+    <span id="dpi-label">
+      <input id="dpi" type="text" value="300" />
+    </span>
   </div>
 </template>
 
