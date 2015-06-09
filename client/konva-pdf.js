@@ -12,39 +12,41 @@
 
   Konva.Pdf.prototype = {
     ___init: function(config) {
+
+      var that = this;
+
+      // hook into Konva tree rendering to update page rendering on property
+      // changes
+      var _draw = Konva.Node.prototype.draw;
+      Konva.Node.prototype.draw = function() {
+        that._updatePage.call(that);
+        _draw.call(this);
+      };
+
       Konva.Shape.call(this, config);
       this.className = 'Pdf';
       this.sceneFunc(this._sceneFunc);
       this.hitFunc(this._hitFunc);
-
       this.canvas = document.createElement('canvas');
-      this.renderedUrl = undefined;
-      this.renderedPage = undefined;
     },
-    _sceneFunc: function(context) {
-
-      // render page to canvas if url or page changed since last rendering
-      if (this.renderedUrl != this.getUrl() ||
-        this.renderedPage != this.getPage() ||
-        this.rotation != this.getRotation() ||
-        this.maxHeight != this.getMaxHeight()) {
-
-        if (this.renderedUrl === this.getUrl()) {
-          this.renderPage(this.pdf, this.getPage());
-        } else {
-          this.renderDocumentInCanvas(this.getUrl(), this.getPage());
-        }
-
-        this.renderedUrl = this.getUrl();
-        this.renderedPage = this.getPage();
-        this.rotation = this.getRotation();
-        this.maxHeight = this.getMaxHeight();
+    _updatePage: function() {
+      if (this._document !== this.getDocument()) {
+        this.renderPage(1);
+      }
+      else if (this._page !== this.getPage() ||
+        this._maxHeight !== this.getMaxHeight()) {
+        this.renderPage(this.getPage());
       }
 
-      // context.drawImage(this.canvas, 0, 0, this.canvas.width, this.canvas.height);
-      context.drawImage(this.canvas, 0, 0, this.getWidth(), this.getHeight());
-      // context.drawImage(this.canvas, 0, 0, this.canvas.width, this.canvas.height, 0, 0, this.getWidth(), this.getHeight());
+      // update private variables to only render if parameters changed
+      this._document = this.getDocument();
+      this._page = this.getPage();
+      this._maxHeight = this.getMaxHeight();
 
+      return this;
+    },
+    _sceneFunc: function(context) {
+      context.drawImage(this.canvas, 0, 0, this.getWidth(), this.getHeight());
       context.fillStrokeShape(this);
     },
     _hitFunc: function(context) {
@@ -53,39 +55,19 @@
       context.closePath();
       context.fillStrokeShape(this);
     },
-    renderDocumentInCanvas: function(url, pageNumber) {
+    renderPage: function(pageNumber) {
 
       var that = this;
-      var encodedUrl = encodeURIComponent(url);
 
-      /* In your Template.xxx.rendered */
-      // Set worker URL to package assets
-      PDFJS.workerSrc = '/packages/pascoual_pdfjs/build/pdf.worker.js';
+      var pdfDocument = that.getDocument();
 
-      PDFJS.maxCanvasPixels = -1;
-
-      $('.progress-modal').css('display', 'block');
-
-      // Create PDF
-      PDFJS.getDocument('/download?url=' + encodedUrl).then(function(pdf) {
-        // PDFJS.getDocument('HuddleLamp_ITS2014.pdf').then(function(pdf) {
-
-        $('.progress-modal').css('display', 'none');
-
-        // set pdf document
-        that.pdf = pdf;
-
-        // render page in canvas
-        that.renderPage(pdf, pageNumber);
-      });
-    },
-    renderPage: function(pdf, pageNumber) {
-      var that = this;
+      // ignore if pdf document is undefined
+      if (!pdfDocument) return;
 
       // flag to indicate whether page is currently rendered
       that.isRenderingPage = true;
 
-      pdf.getPage(pageNumber).then(function(page) {
+      pdfDocument.getPage(pageNumber).then(function(page) {
 
         // parent or containing component
         var parent = that.getParent();
@@ -133,16 +115,22 @@
             // intent: 'print'
         }).promise.then(function() {
 
-          // redraw parent after page was rendered
-          parent.draw();
+          // console.log('redraw2');
+          //
+          // // redraw parent after page was rendered
+          // parent.draw();
 
           // set page as rendered
           that.isRenderingPage = false;
+          
+          if (that.getOnRendered()) {
+            that.getOnRendered().call(that, page);
+          }
         });
       });
     },
     nextPage: function() {
-      if (!this.pdf) {
+      if (!this.getDocument()) {
         throw new Meteor.Error('no pdf document loaded');
       }
 
@@ -153,7 +141,7 @@
       var parent = this.getParent();
 
       var currentPage = this.getPage();
-      if (currentPage < this.pdf.numPages) {
+      if (currentPage < this.getDocument().numPages) {
         this.setPage(++currentPage);
       }
 
@@ -161,7 +149,7 @@
       parent.draw();
     },
     previousPage: function() {
-      if (!this.pdf) {
+      if (!this.getDocument()) {
         throw new Meteor.Error('no pdf document loaded');
       }
 
@@ -178,27 +166,24 @@
 
       // redraw parent
       parent.draw();
-    },
-    rerender: function() {
-      this.renderPage(this.pdf, this.renderedPage);
     }
   };
 
   Konva.Util.extend(Konva.Pdf, Konva.Shape);
 
-  Konva.Factory.addGetterSetter(Konva.Pdf, 'url', undefined);
+  Konva.Factory.addGetterSetter(Konva.Pdf, 'document', undefined);
 
   /**
-   * set url
-   * @name setUrl
+   * set document
+   * @name setDocument
    * @method
    * @memberof Konva.Pdf.prototype
-   * @param {String} text. The default is undefined
+   * @param {PDFDocumentProxy} document. The default is undefined
    */
 
   /**
-   * get url
-   * @name getUrl
+   * get document
+   * @name getDocument
    * @method
    * @memberof Konva.Pdf.prototype
    */
@@ -219,24 +204,6 @@
    * @method
    * @memberof Konva.Pdf.prototype
    */
-
-  Konva.Factory.addGetterSetter(Konva.Pdf, 'rotation', 0);
-
-  /**
-   * set rotation
-   * @name setRotation
-   * @method
-   * @memberof Konva.Pdf.prototype
-   * @param {Number} rotation. The default is 0
-   */
-
-  /**
-   * get rotation
-   * @name getRotation
-   * @method
-   * @memberof Konva.Pdf.prototype
-   */
-
   Konva.Factory.addGetterSetter(Konva.Pdf, 'maxWidth', undefined);
 
   /**
@@ -267,6 +234,23 @@
   /**
    * get maxHeight
    * @name getMaxHeight
+   * @method
+   * @memberof Konva.Pdf.prototype
+   */
+
+  Konva.Factory.addGetterSetter(Konva.Pdf, 'onRendered', undefined);
+
+  /**
+   * set onRendered
+   * @name setOnRendered
+   * @method
+   * @memberof Konva.Pdf.prototype
+   * @param {Function} onRendered. The default is undefined
+   */
+
+  /**
+   * get onRendered
+   * @name getOnRendered
    * @method
    * @memberof Konva.Pdf.prototype
    */
