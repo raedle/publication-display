@@ -80,7 +80,7 @@ Template.Tools.events({
   "keyup #document-url": function(e, tmpl) {
     if (e.keyCode === 13) {
       var url = tmpl.$('#document-url').val();
-      downloadDocument(url)
+      downloadDocument(url);
     }
   },
   "change input[name=document-orientation]": function(e, tmpl) {
@@ -95,54 +95,45 @@ Template.Tools.events({
       case 'document-landscape':
         stage.setWidth(height);
         stage.setHeight(width);
-        rect.setWidth(height);
-        rect.setHeight(width);
-        $('#document-max-height').attr('max', width);
-        $('#document-max-height').val(width);
+        paperBackground.setWidth(height);
+        paperBackground.setHeight(width);
         break;
       case 'document-portrait':
         stage.setWidth(width);
         stage.setHeight(height);
-        rect.setWidth(width);
-        rect.setHeight(height);
-        $('#document-max-height').attr('max', height);
-        $('#document-max-height').val(height);
+        paperBackground.setWidth(width);
+        paperBackground.setHeight(height);
         break;
     }
 
-    layer.setDpi(dpi);
-    pdf.rerender();
+    paper.setDpi(dpi);
+    pdf.invalidate();
     stage.draw();
   },
   "change #document-render-quality": function(e, tmpl) {
     var dpi = parseInt(tmpl.$('#document-render-quality').val());
-
-    layer.setDpi(dpi);
-    pdf.rerender();
-    layer.draw();
+    paper.setDpi(dpi);
+    pdf.invalidate();
+    paper.draw();
   },
-  "change #document-max-height": function(e, tmpl) {
-    var maxHeight = parseInt(tmpl.$('#document-max-height').val());
+  "change #document-page-scale": function(e, tmpl) {
+    var pageScale = parseInt(tmpl.$('#document-page-scale').val());
 
-    pdf.setMaxHeight(maxHeight);
-    layer.draw();
+    pdf.setPageScale(pageScale);
+    pdf.invalidate();
+    paper.draw();
   },
   "click #print": function(e, tmpl) {
-    layer.setDpi(300);
-    pdf.rerender();
-    layer.draw();
+    var dpi = parseInt(tmpl.$('#document-print-quality').val());
+    paper.setDpi(dpi);
+    pdf.invalidate();
+    paper.draw();
 
-    // wait until rendered for print.
-    Meteor.setTimeout(function() {
-      window.print();
-    }, 3000);
+    pdf.on('rendered', print);
   }
 });
 
 Template.Paper.rendered = function() {
-
-  $('#document-max-height').attr('max', pageSize.height);
-  $('#document-max-height').val(pageSize.height);
 
   stage = new Konva.Stage({
     container: 'paper',
@@ -163,14 +154,9 @@ Template.Paper.rendered = function() {
   paper.add(paperBackground);
 
   pdf = new Konva.Pdf({
-    draggable: true,
-    onRendered: function(page) {
-      console.log('rendered');
-      paper.draw();
-
-      showActivityIndicator(false);
-    }
+    draggable: true
   });
+  pdf.on('rendered', pdfRendered);
 
   paper.add(pdf);
 
@@ -183,8 +169,6 @@ Template.Paper.rendered = function() {
   });
   paper.add(qrCode);
   // qrCode.setZIndex(999);
-
-  console.log(qrCode);
 
   // add the layer to the stage
   stage.add(paper);
@@ -206,6 +190,7 @@ var downloadDocument = function(url) {
 
   var encodedUrl = encodeURIComponent(url);
   var serviceUrl = '/download?url=' + encodedUrl;
+  // serviceUrl = 'HuddleLamp_ITS2014.pdf';
 
   // Download and create PDF
   PDFJS.getDocument(serviceUrl).then(function(pdfDocument) {
@@ -224,11 +209,34 @@ var downloadDocument = function(url) {
 var previousPage = function() {
   showActivityIndicator(true);
   pdf.previousPage();
+  paper.draw();
 };
 
 var nextPage = function() {
   showActivityIndicator(true);
   pdf.nextPage();
+  paper.draw();
+};
+
+var pdfRendered = function(e) {
+  paper.draw();
+  showActivityIndicator(false);
+};
+
+var print = function(e) {
+  // off removes all listeners but the pdf rendered is always needed
+  pdf.off('rendered', print);
+  pdf.on('rendered', pdfRendered);
+
+  showActivityIndicator(true);
+
+  window.print();
+
+  var dpi = parseInt($('#document-render-quality').val());
+
+  paper.setDpi(dpi);
+  pdf.invalidate();
+  paper.draw();
 };
 
 /**
@@ -238,4 +246,4 @@ var nextPage = function() {
 var showActivityIndicator = function(visible) {
   var visibility = visible ? 'block' : 'none';
   $('.progress-modal').css('display', visibility);
-}
+};

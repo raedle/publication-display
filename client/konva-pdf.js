@@ -1,5 +1,96 @@
 (function() {
 
+  var pdfDocument;
+  var page;
+  var pageScale;
+  var canvas;
+  var isInvalid = false;
+
+  var updatePage = function() {
+    if (pdfDocument !== this.getDocument()) {
+      renderPage.call(this, 1);
+    } else if (isInvalid ||
+      page !== this.getPage() ||
+      pageScale != this.getPageScale()) {
+      renderPage.call(this, this.getPage());
+    }
+
+    // update private variables to only render if parameters changed
+    pdfDocument = this.getDocument();
+    page = this.getPage();
+    pageScale = this.getPageScale();
+    isInvalid = false;
+
+    return this;
+  };
+
+  var renderPage = function(pageNumber) {
+    var that = this;
+
+    var pdfDocument = that.getDocument();
+
+    // ignore if pdf document is undefined
+    if (!pdfDocument) return;
+
+    // flag to indicate whether page is currently rendered
+    that.isRenderingPage = true;
+
+    pdfDocument.getPage(pageNumber).then(function(page) {
+
+      // parent or containing component
+      var parent = that.getParent();
+      var desiredWidth = parent.getWidth();
+      var desiredHeight = parent.getHeight();
+
+      var pageScale = that.getPageScale() / 100.0;
+      desiredWidth *= pageScale;
+      desiredHeight *= pageScale;
+
+      var context = canvas.getContext('2d');
+
+      // clear offscreen canvas
+      context.clearRect(0, 0, canvas.width, canvas.height);
+
+      var viewport = page.getViewport(1.0);
+      var scale = 1.0;
+
+      var layer = that.getLayer();
+      if (layer.customNodeType && layer.customNodeType === 'PrintLayer') {
+        scale = layer.getDpi() / 72;
+        viewport = page.getViewport(scale);
+      }
+
+      // Prepare canvas using PDF page dimensions
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+
+      var defaultViewport = page.getViewport(1.0);
+      var scaleX = desiredWidth / defaultViewport.width;
+      var scaleY = desiredHeight / defaultViewport.height;
+      var desiredScale = Math.min(scaleX, scaleY);
+      var newWidth = Math.min(desiredWidth, defaultViewport.width * desiredScale);
+      var newHeight = Math.min(desiredHeight, defaultViewport.height * desiredScale);
+      that.setWidth(newWidth);
+      that.setHeight(newHeight);
+
+      // Render PDF page into canvas context
+      page.render({
+        canvasContext: context,
+        viewport: viewport //,
+          // intent: 'print'
+      }).promise.then(function() {
+
+        // set page as rendered
+        that.isRenderingPage = false;
+
+        that.fire('rendered', {
+          sender: that,
+          page: page
+        }, false);
+      });
+    });
+  };
+
   /**
    * Pdf constructor.
    * @constructor
@@ -19,7 +110,7 @@
       // changes
       var _draw = Konva.Node.prototype.draw;
       Konva.Node.prototype.draw = function() {
-        that._updatePage.call(that);
+        updatePage.call(that);
         _draw.call(this);
       };
 
@@ -27,26 +118,10 @@
       this.className = 'Pdf';
       this.sceneFunc(this._sceneFunc);
       this.hitFunc(this._hitFunc);
-      this.canvas = document.createElement('canvas');
-    },
-    _updatePage: function() {
-      if (this._document !== this.getDocument()) {
-        this.renderPage(1);
-      }
-      else if (this._page !== this.getPage() ||
-        this._maxHeight !== this.getMaxHeight()) {
-        this.renderPage(this.getPage());
-      }
-
-      // update private variables to only render if parameters changed
-      this._document = this.getDocument();
-      this._page = this.getPage();
-      this._maxHeight = this.getMaxHeight();
-
-      return this;
+      canvas = document.createElement('canvas');
     },
     _sceneFunc: function(context) {
-      context.drawImage(this.canvas, 0, 0, this.getWidth(), this.getHeight());
+      context.drawImage(canvas, 0, 0, this.getWidth(), this.getHeight());
       context.fillStrokeShape(this);
     },
     _hitFunc: function(context) {
@@ -55,79 +130,8 @@
       context.closePath();
       context.fillStrokeShape(this);
     },
-    renderPage: function(pageNumber) {
-
-      var that = this;
-
-      var pdfDocument = that.getDocument();
-
-      // ignore if pdf document is undefined
-      if (!pdfDocument) return;
-
-      // flag to indicate whether page is currently rendered
-      that.isRenderingPage = true;
-
-      pdfDocument.getPage(pageNumber).then(function(page) {
-
-        // parent or containing component
-        var parent = that.getParent();
-        var desiredWidth = parent.getWidth();
-        var desiredHeight = parent.getHeight();
-        desiredWidth = Math.min(desiredWidth, that.getMaxWidth() ? that.getMaxWidth() : parent.getWidth());
-        desiredHeight = Math.min(desiredHeight, that.getMaxHeight() ? that.getMaxHeight() : parent.getHeight());
-
-        var context = that.canvas.getContext('2d');
-
-        // clear offscreen canvas
-        context.clearRect(0, 0, that.canvas.width, that.canvas.height);
-
-        var rotation = that.getRotation();
-        console.log(rotation);
-
-        var viewport = page.getViewport(1.0, rotation);
-        var scale = 1.0;
-
-        var layer = that.getLayer();
-        if (layer.customNodeType && layer.customNodeType === 'PrintLayer') {
-          scale = layer.getDpi() / 72;
-          viewport = page.getViewport(scale, rotation);
-        }
-
-        // Prepare canvas using PDF page dimensions
-        that.canvas.height = viewport.height;
-        that.canvas.width = viewport.width;
-
-        var defaultViewport = page.getViewport(1.0, rotation);
-        var scaleX = desiredWidth / defaultViewport.width;
-        var scaleY = desiredHeight / defaultViewport.height;
-        var desiredScale = Math.min(scaleX, scaleY);
-        var newWidth = Math.min(desiredWidth, defaultViewport.width * desiredScale);
-        var newHeight = Math.min(desiredHeight, defaultViewport.height * desiredScale);
-        that.setWidth(newWidth);
-        that.setHeight(newHeight);
-
-        console.log(viewport);
-
-        // Render PDF page into canvas context
-        page.render({
-          canvasContext: context,
-          viewport: viewport //,
-            // intent: 'print'
-        }).promise.then(function() {
-
-          // console.log('redraw2');
-          //
-          // // redraw parent after page was rendered
-          // parent.draw();
-
-          // set page as rendered
-          that.isRenderingPage = false;
-          
-          if (that.getOnRendered()) {
-            that.getOnRendered().call(that, page);
-          }
-        });
-      });
+    invalidate: function() {
+      isInvalid = true;
     },
     nextPage: function() {
       if (!this.getDocument()) {
@@ -144,9 +148,6 @@
       if (currentPage < this.getDocument().numPages) {
         this.setPage(++currentPage);
       }
-
-      // redraw parent
-      parent.draw();
     },
     previousPage: function() {
       if (!this.getDocument()) {
@@ -163,9 +164,6 @@
       if (currentPage > 1) {
         this.setPage(--currentPage);
       }
-
-      // redraw parent
-      parent.draw();
     }
   };
 
@@ -204,53 +202,20 @@
    * @method
    * @memberof Konva.Pdf.prototype
    */
-  Konva.Factory.addGetterSetter(Konva.Pdf, 'maxWidth', undefined);
+
+  Konva.Factory.addGetterSetter(Konva.Pdf, 'pageScale', 100);
 
   /**
-   * set maxWidth
-   * @name setMaxWidth
+   * set pageScale
+   * @name setPageScale
    * @method
    * @memberof Konva.Pdf.prototype
-   * @param {Number} maxWidth. The default is undefined and parent width is used
+   * @param {Number} pageScale. The default is 100
    */
 
   /**
-   * get maxWidth
-   * @name getMaxWidth
-   * @method
-   * @memberof Konva.Pdf.prototype
-   */
-
-  Konva.Factory.addGetterSetter(Konva.Pdf, 'maxHeight', undefined);
-
-  /**
-   * set maxHeight
-   * @name setMaxHeight
-   * @method
-   * @memberof Konva.Pdf.prototype
-   * @param {Number} maxHeight. The default is undefined and parent height is used
-   */
-
-  /**
-   * get maxHeight
-   * @name getMaxHeight
-   * @method
-   * @memberof Konva.Pdf.prototype
-   */
-
-  Konva.Factory.addGetterSetter(Konva.Pdf, 'onRendered', undefined);
-
-  /**
-   * set onRendered
-   * @name setOnRendered
-   * @method
-   * @memberof Konva.Pdf.prototype
-   * @param {Function} onRendered. The default is undefined
-   */
-
-  /**
-   * get onRendered
-   * @name getOnRendered
+   * get pageScale
+   * @name getPageScale
    * @method
    * @memberof Konva.Pdf.prototype
    */
