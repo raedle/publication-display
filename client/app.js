@@ -52,7 +52,7 @@ var convertPageSizeToScreenSize = function(pageSize, printDpi) {
 };
 
 // var url = 'http://hci.uni-konstanz.de/downloads/paper674.pdf';
-var url = 'http://hci.uni-konstanz.de/downloads/its230n-klinkhammer.pdf';
+// var url = 'http://hci.uni-konstanz.de/downloads/its230n-klinkhammer.pdf';
 var dpi = 96;
 var pageSize = convertPageSizeToScreenSize(PageSizes.A4, 96);
 
@@ -82,6 +82,10 @@ Template.Tools.events({
       var url = tmpl.$('#document-url').val();
       downloadDocument(url);
     }
+  },
+  "click #document-url-btn": function(e, tmpl) {
+    var url = tmpl.$('#document-url').val();
+    downloadDocument(url);
   },
   "change input[name=document-orientation]": function(e, tmpl) {
     console.log('hello');
@@ -161,8 +165,8 @@ Template.Paper.rendered = function() {
   paper.add(pdf);
 
   qrCode = new Konva.QrCode({
-    x: 60,
-    y: 60, //pageSize.height - 188,
+    x: 100,
+    y: 450, //pageSize.height - 188,
     width: 128,
     height: 128,
     draggable: true
@@ -173,7 +177,7 @@ Template.Paper.rendered = function() {
   // add the layer to the stage
   stage.add(paper);
 
-  downloadDocument(url);
+  // downloadDocument(url);
 };
 
 /**

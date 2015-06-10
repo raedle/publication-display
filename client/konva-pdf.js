@@ -29,6 +29,11 @@
 
     var pdfDocument = that.getDocument();
 
+    var context = canvas.getContext('2d');
+
+    // clear offscreen canvas
+    context.clearRect(0, 0, canvas.width, canvas.height);
+
     // ignore if pdf document is undefined
     if (!pdfDocument) return;
 
@@ -45,11 +50,6 @@
       var pageScale = that.getPageScale() / 100.0;
       desiredWidth *= pageScale;
       desiredHeight *= pageScale;
-
-      var context = canvas.getContext('2d');
-
-      // clear offscreen canvas
-      context.clearRect(0, 0, canvas.width, canvas.height);
 
       var viewport = page.getViewport(1.0);
       var scale = 1.0;
@@ -91,6 +91,34 @@
     });
   };
 
+  // http: //www.html5canvastutorials.com/tutorials/html5-canvas-wrap-text-tutorial/
+  var wrapText = function(context, text, x, y, maxWidth, lineHeight) {
+    var cars = text.split("\n");
+
+    for (var ii = 0; ii < cars.length; ii++) {
+
+      var line = "";
+      var words = cars[ii].split(" ");
+
+      for (var n = 0; n < words.length; n++) {
+        var testLine = line + words[n] + " ";
+        var metrics = context.measureText(testLine);
+        var testWidth = metrics.width;
+
+        if (testWidth > maxWidth) {
+          context.fillText(line, x, y);
+          line = words[n] + " ";
+          y += lineHeight;
+        } else {
+          line = testLine;
+        }
+      }
+
+      context.fillText(line, x, y);
+      y += lineHeight;
+    }
+  }
+
   /**
    * Pdf constructor.
    * @constructor
@@ -121,8 +149,35 @@
       canvas = document.createElement('canvas');
     },
     _sceneFunc: function(context) {
-      context.drawImage(canvas, 0, 0, this.getWidth(), this.getHeight());
-      context.fillStrokeShape(this);
+
+      if (this.getDocument()) {
+        context.drawImage(canvas, 0, 0, this.getWidth(), this.getHeight());
+        context.fillStrokeShape(this);
+      } else {
+
+        var instructions = [
+          'Paste url of pdf document to the input field "Url to Document" and press "Go" button or hit enter key to generate pdf.',
+          'OPTIONALLY: Select different page orientation, e.g., if pdf page orientation is horizontal.',
+          'Use drag and drop to position generated QR code on page so it does not overlap with pdf content.',
+          'OPTIONALLY: Scale page with slider if pdf content and QR code overlap. Alternatively use drag and drop to position pdf content.',
+          'OPTIONALLY: Adjust "Print Quality".',
+          'Press "Print" button to render page. It automatically opens the print dialog.'
+        ];
+        var text = '';
+        for (var i = 0; i < instructions.length; i++) {
+          if (i > 0)
+            text += '\n';
+
+          text += i + 1 + '. ' + instructions[i];
+        }
+
+        var fontSize = 20;
+        context.font = 'bold ' + fontSize + 'px Arial';
+        context.fillStyle = 'black';
+        var measureText = context.measureText(text);
+
+        wrapText(context, text, 100, 100, this.getParent().getWidth() - 100, fontSize * 1.5);
+      }
     },
     _hitFunc: function(context) {
       context.beginPath();

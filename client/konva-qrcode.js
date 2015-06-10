@@ -55,7 +55,7 @@
 
   Konva.Util.extend(Konva.QrCode, Konva.Shape);
 
-  Konva.Factory.addGetterSetter(Konva.QrCode, 'text', 'Hello World!');
+  Konva.Factory.addGetterSetter(Konva.QrCode, 'text', 'http://pubdisplay.romanraedle.com');
 
   /**
    * set text
